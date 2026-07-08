@@ -61,6 +61,17 @@ def strategy_returns(df: pd.DataFrame, signal: pd.Series, convention: str = "A",
     return (gross - cost).rename(f"net_return_{convention}")
 
 
+def resample_weekly(df: pd.DataFrame) -> pd.DataFrame:
+    """Daily bars -> weekly bars (week's first open, week's last close), for testing the fade
+    rule at weekly frequency. Weekly bars are dated by the week's last session, so a signal
+    dated week w still only uses data through w's close."""
+    weekly = df.resample("W-FRI").agg(open=("open", "first"), close=("close", "last")).dropna()
+    last_sessions = df.index.to_series().resample("W-FRI").last().dropna()
+    weekly.index = pd.DatetimeIndex(last_sessions.loc[weekly.index])
+    weekly.index.name = df.index.name
+    return weekly
+
+
 def conditional_spread_bps(close: pd.Series) -> float:
     """E[return | yesterday down] - E[return | yesterday up], in bps: the core mean-reversion
     effect size from the original notebook's groupby analysis, over this `close` window."""
@@ -71,12 +82,12 @@ def conditional_spread_bps(close: pd.Series) -> float:
     return (down.mean() - up.mean()) * 10000
 
 
-def fold_metrics(test_returns: pd.Series) -> dict:
+def fold_metrics(test_returns: pd.Series, periods_per_year: int = ANNUALIZATION_FACTOR) -> dict:
     test_returns = test_returns.dropna()
     if test_returns.empty or test_returns.std() == 0:
         sharpe = np.nan
     else:
-        sharpe = test_returns.mean() / test_returns.std() * np.sqrt(ANNUALIZATION_FACTOR)
+        sharpe = test_returns.mean() / test_returns.std() * np.sqrt(periods_per_year)
     return {
         "n_days": len(test_returns),
         "mean_daily_bps": test_returns.mean() * 10000,
@@ -86,7 +97,14 @@ def fold_metrics(test_returns: pd.Series) -> dict:
     }
 
 
-def run_walk_forward(df: pd.DataFrame, signal: pd.Series, convention: str = "A", cost_bps: float = 1.0, **fold_kwargs) -> pd.DataFrame:
+def run_walk_forward(
+    df: pd.DataFrame,
+    signal: pd.Series,
+    convention: str = "A",
+    cost_bps: float = 1.0,
+    periods_per_year: int = ANNUALIZATION_FACTOR,
+    **fold_kwargs,
+) -> pd.DataFrame:
     """One row per fold: the conditional edge measured in-window (train_spread_bps) alongside
     what trading the out-of-window fold actually would have earned net of costs."""
     net_returns = strategy_returns(df, signal, convention=convention, cost_bps=cost_bps)
@@ -95,7 +113,7 @@ def run_walk_forward(df: pd.DataFrame, signal: pd.Series, convention: str = "A",
     for f in folds:
         test_slice = net_returns.loc[f.test_start : f.test_end]
         train_close = df["close"].loc[f.train_start : f.train_end]
-        row = fold_metrics(test_slice)
+        row = fold_metrics(test_slice, periods_per_year=periods_per_year)
         row["train_spread_bps"] = conditional_spread_bps(train_close)
         row.update(train_start=f.train_start, train_end=f.train_end, test_start=f.test_start, test_end=f.test_end)
         rows.append(row)

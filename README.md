@@ -43,6 +43,26 @@ apparent edge isn't statistically distinguishable from noise given the sample si
 matches the expected outcome flagged in the plan: short-term daily reversal in SPY is a
 decayed, largely post-2013-dead anomaly.
 
+## Pivot tests (`scripts/run_pivots.py`)
+
+After the base rule's NO-GO, the plan's documented pivots were run through the identical gate
+(`meanrev/validation/gate.py`). **Result as of 2026-07-08: all six NO-GO.**
+
+| Variant | Recent OOS Sharpe | p-value | Verdict |
+|---|---|---|---|
+| SPY daily fade, high-vol regime only (long/short) | -0.02 | 0.21 | NO-GO |
+| SPY daily fade, high-vol regime only (long-only) | 0.82 | 0.45 | NO-GO |
+| SPY weekly fade (long/short) | 0.15 | 0.06 | NO-GO |
+| SPY weekly fade (long-only) | 1.19 | 0.23 | NO-GO |
+| BTC-USD daily fade | -0.66 | 0.77 | NO-GO |
+| ETH-USD daily fade | -0.03 | 0.28 | NO-GO |
+
+The long-only variants show healthy-looking Sharpes but fail significance: a mostly-long
+signal earns the equity/crypto risk premium regardless of *when* it's long, and the permutation
+test (which preserves the long share while destroying the timing) shows the fade timing adds
+nothing distinguishable from noise. The crypto results confirm the daily-reversal effect that
+motivated the original notebook has decayed in that market as well.
+
 ## Tests
 
 ```

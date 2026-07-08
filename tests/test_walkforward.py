@@ -64,3 +64,14 @@ def test_conditional_spread_matches_manual_groupby():
     lag_dir = np.sign(ret.shift(1))
     expected = (ret[lag_dir < 0].mean() - ret[lag_dir > 0].mean()) * 10000
     assert np.isclose(spread, expected)
+
+
+def test_resample_weekly_uses_first_open_last_close_and_real_session_dates():
+    idx = pd.bdate_range("2024-01-01", "2024-01-19")  # 3 full weeks
+    df = pd.DataFrame({"open": np.arange(len(idx), dtype=float) + 1, "close": np.arange(len(idx), dtype=float) + 100}, index=idx)
+    weekly = wf.resample_weekly(df)
+
+    assert len(weekly) == 3
+    assert weekly.index.isin(df.index).all()
+    assert weekly.iloc[0]["open"] == df.iloc[0]["open"]        # Monday's open
+    assert weekly.iloc[0]["close"] == df.iloc[4]["close"]      # Friday's close

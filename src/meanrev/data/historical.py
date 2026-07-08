@@ -10,12 +10,21 @@ from meanrev import calendar as cal
 CACHE_DIR = Path(__file__).resolve().parents[3] / "data"
 
 
-def load(symbol: str, start: str = "1990-01-01", end: str | None = None, refresh: bool = False) -> pd.DataFrame:
+def load(
+    symbol: str,
+    start: str = "1990-01-01",
+    end: str | None = None,
+    refresh: bool = False,
+    nyse_calendar: bool = True,
+) -> pd.DataFrame:
     """Adjusted + raw daily OHLCV for `symbol`, cached to parquet under data/.
 
     Columns: open, high, low, close (adjusted), raw_close (unadjusted), volume.
     Adjusted close is what return/signal calculations must use — SPY pays dividends,
     and raw close shows artificial jumps on ex-dividend dates that would corrupt log returns.
+
+    Set nyse_calendar=False for assets that don't trade on NYSE sessions (e.g. crypto,
+    which trades every calendar day) — skips the session-completeness part of QC.
     """
     cache_path = CACHE_DIR / f"{symbol}.parquet"
     df = pd.read_parquet(cache_path) if cache_path.exists() and not refresh else None
@@ -26,7 +35,7 @@ def load(symbol: str, start: str = "1990-01-01", end: str | None = None, refresh
         df = _download(symbol, start, end)
         CACHE_DIR.mkdir(parents=True, exist_ok=True)
         df.to_parquet(cache_path)
-    return _quality_check(df, symbol)
+    return _quality_check(df, symbol, nyse_calendar=nyse_calendar)
 
 
 def _download(symbol: str, start: str, end: str | None) -> pd.DataFrame:
@@ -50,11 +59,14 @@ def _download(symbol: str, start: str, end: str | None) -> pd.DataFrame:
     return df
 
 
-def _quality_check(df: pd.DataFrame, symbol: str) -> pd.DataFrame:
+def _quality_check(df: pd.DataFrame, symbol: str, nyse_calendar: bool = True) -> pd.DataFrame:
     if df.isna().any().any():
         raise ValueError(f"{symbol}: NaNs present in cached data — refresh or investigate")
     if (df[["open", "high", "low", "close", "raw_close"]] <= 0).any().any():
         raise ValueError(f"{symbol}: non-positive prices present in cached data")
+
+    if not nyse_calendar:
+        return df
 
     expected = cal.sessions(df.index.min(), df.index.max())
     missing = expected.difference(df.index)
