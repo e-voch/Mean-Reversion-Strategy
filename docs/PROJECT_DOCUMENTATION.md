@@ -1,4 +1,4 @@
-# Mean-Reversion Strategy — Project Documentation
+# Mean-Reversion Strategy - Project Documentation
 
 *Last updated: 2026-07-08*
 
@@ -11,7 +11,7 @@
 The project began as a single research notebook (`notebooks/01_bch_original.ipynb`) that found a
 **lag-1 direction-fade mean-reversion pattern** in Bitcoin Cash (BCH) daily price data:
 
-> If yesterday's price move was down, today's move tends to be up — and vice versa.
+> If yesterday's price move was down, today's move tends to be up - and vice versa.
 > So: fade yesterday's direction. `signal = -1 × sign(yesterday's return)`
 
 The notebook validated this with a single 75/25 chronological train/test split, computed a win
@@ -21,7 +21,7 @@ rate, compound return, and Sharpe ratio, and layered a simple crypto exchange fe
 ### 1.2 The goal
 
 Turn that research finding into a **production-ready trading system for the S&P 500 (via the
-SPY ETF)** — something that could be deployed to paper-trade and eventually live-trade with
+SPY ETF)** - something that could be deployed to paper-trade and eventually live-trade with
 real risk controls, rather than remaining a one-off notebook analysis.
 
 ### 1.3 The plan (phased, gated)
@@ -34,7 +34,7 @@ the question that could kill the project:
 | Phase | Deliverable | Gate |
 |---|---|---|
 | 0 | Repo scaffold, package structure | Tests green |
-| 1 | **SPY signal validation** | Net Sharpe ≥ 0.5 (recent 10y OOS), permutation p < 0.05, ≥60% positive folds, edge ≥ 2× costs — **else stop** |
+| 1 | **SPY signal validation** | Net Sharpe ≥ 0.5 (recent 10y OOS), permutation p < 0.05, ≥60% positive folds, edge ≥ 2× costs - **else stop** |
 | 2 | Backtest engine | Engine reproduces notebook results; suite green |
 | 3 | Risk framework (vol targeting, kill-switch) | Verified on 2008/2020 history |
 | 4 | Paper trading on Alpaca | ≥60 sessions, clean reconciliation |
@@ -63,7 +63,7 @@ Mean-Reversion-Strategy/
 ├── scripts/
 │   ├── run_validation.py         # Phase 1 gate: base rule on SPY (long/short + long-only)
 │   └── run_pivots.py             # Pivot variants: vol-regime, weekly, crypto re-validation
-├── src/meanrev/                  # The installable package — all logic lives here, not in notebooks
+├── src/meanrev/                  # The installable package - all logic lives here, not in notebooks
 │   ├── __init__.py               # TLS workaround auto-setup (see §6.2)
 │   ├── calendar.py               # NYSE trading calendar helpers
 │   ├── data/
@@ -81,12 +81,12 @@ Mean-Reversion-Strategy/
 ### Design principles
 
 1. **One signal implementation.** `signal/mean_reversion.py` is a pure, I/O-free function meant
-   to be shared by research, backtest, and (had it gone live) the production runner — so
+   to be shared by research, backtest, and (had it gone live) the production runner - so
    backtest and live logic can never drift apart.
 2. **Research imports production, never the reverse.** Notebooks and scripts call package
    functions; no logic lives only in a notebook.
 3. **One gate, fixed thresholds.** Every strategy variant is judged by
-   `validation/gate.py` with identical criteria — a new variant cannot be judged by a
+   `validation/gate.py` with identical criteria - a new variant cannot be judged by a
    friendlier yardstick than the one that failed its predecessor.
 4. **All date arithmetic goes through `calendar.py`.** Equities trade ~252 sessions/year with
    holidays and early closes; naive `timedelta(days=1)` math silently corrupts alignment.
@@ -96,34 +96,34 @@ Mean-Reversion-Strategy/
 ## 3. Important files in detail
 
 ### `src/meanrev/signal/mean_reversion.py`
-- `compute_signal(close, long_only=False)` — the base rule. Signal dated *t* uses only data
+- `compute_signal(close, long_only=False)` - the base rule. Signal dated *t* uses only data
   through *t*'s close (no lookahead). Returns target position ∈ {-1, 0, +1}.
-- `compute_signal_vol_conditioned(...)` — pivot variant: signal active only when 20-day
+- `compute_signal_vol_conditioned(...)` - pivot variant: signal active only when 20-day
   realized vol ranks above the median of its trailing 1-year distribution (point-in-time
   rolling rank, no future data).
 
 ### `src/meanrev/validation/walkforward.py`
-- `make_folds(...)` — rolling ~3y-train / 6m-test / 6m-step windows, replacing the notebook's
+- `make_folds(...)` - rolling ~3y-train / 6m-test / 6m-step windows, replacing the notebook's
   single 75/25 split (which can be dominated by one lucky/dead era).
-- `strategy_returns(df, signal, convention, cost_bps)` — computes net returns under a
+- `strategy_returns(df, signal, convention, cost_bps)` - computes net returns under a
   **realizable execution convention**. The notebook implicitly traded at the same close that
   generated the signal, which is impossible live. Two honest alternatives are modeled:
   - **Convention A**: signal after close(t) → trade market-on-open(t+1) → P&L open(t+1)→open(t+2)
   - **Convention B**: near-close proxy signal → market-on-close(t) → P&L close(t)→close(t+1)
-- `resample_weekly(df)` — weekly bars for the weekly-frequency pivot, dated by the week's last
+- `resample_weekly(df)` - weekly bars for the weekly-frequency pivot, dated by the week's last
   session so signals remain point-in-time.
-- Costs are modeled as per-side bps on turnover (1bp/side SPY, 5bps/side crypto — both
+- Costs are modeled as per-side bps on turnover (1bp/side SPY, 5bps/side crypto - both
   conservative).
 
 ### `src/meanrev/validation/significance.py`
-- `conditional_ttest` — Welch's t-test: is E[return | yesterday down] really different from
+- `conditional_ttest` - Welch's t-test: is E[return | yesterday down] really different from
   E[return | yesterday up]?
-- `block_bootstrap_ci` — circular block bootstrap CI on mean daily return (preserves
+- `block_bootstrap_ci` - circular block bootstrap CI on mean daily return (preserves
   autocorrelation an iid bootstrap would destroy).
-- `permutation_test` — circularly shifts the signal against returns 10,000× and compares the
+- `permutation_test` - circularly shifts the signal against returns 10,000× and compares the
   realized Sharpe to the null distribution. This is the test that matters most: it answers
   *"is this particular signal/return alignment special, or would any similarly-shaped series
-  do as well?"* — and it is what exposed the long-only variants (§4.3).
+  do as well?"* - and it is what exposed the long-only variants (§4.3).
 
 ### `src/meanrev/validation/gate.py`
 The Gate #1 thresholds, applied identically to every variant:
@@ -135,7 +135,7 @@ The Gate #1 thresholds, applied identically to every variant:
 
 ### `src/meanrev/data/historical.py`
 - Downloads **both adjusted and raw close** via yfinance. Adjusted close is mandatory for
-  return/signal math — SPY pays dividends, and raw close shows artificial drops on ex-dividend
+  return/signal math - SPY pays dividends, and raw close shows artificial drops on ex-dividend
   dates that would corrupt log returns and generate false "down day" signals.
 - Parquet cache with range checking (re-downloads if the cached range doesn't cover the request).
 - A QC gate that **raises** (never silently continues) on NaNs, non-positive prices, missing
@@ -145,14 +145,14 @@ The Gate #1 thresholds, applied identically to every variant:
 ### `tests/` (29 tests)
 Unit tests for signal correctness (including NaN/first-day edges), calendar behavior (holidays,
 early closes, `sqrt(252)` not `sqrt(365)`), fold construction, cost math, QC rejection paths,
-cache behavior, and — most importantly — **no-lookahead regression guards**, written after a
+cache behavior, and - most importantly - **no-lookahead regression guards**, written after a
 real lookahead bug was caught during development (§5).
 
 ---
 
 ## 4. Results
 
-### 4.1 Phase 1: base rule on SPY — NO-GO
+### 4.1 Phase 1: base rule on SPY - NO-GO
 
 Full SPY history (1993–2026), walk-forward, net of 1bp/side costs, Convention A:
 
@@ -164,9 +164,9 @@ Full SPY history (1993–2026), walk-forward, net of 1bp/side costs, Convention 
 The fold-by-fold history shows the textbook decay pattern: the conditional return spread
 (`train_spread_bps`) was large and reliable from the late 1990s through ~2012 (peaking at
 26–31bps/day around 2008–09), then shrank and destabilized. The strategy's recent OOS
-performance is indistinguishable from — or worse than — noise.
+performance is indistinguishable from - or worse than - noise.
 
-### 4.2 Pivots — all NO-GO
+### 4.2 Pivots - all NO-GO
 
 Three documented pivots were run through the identical gate:
 
@@ -184,15 +184,15 @@ Three documented pivots were run through the identical gate:
 The long-only variants *look* attractive (weekly long-only: Sharpe 1.19, 84% positive folds).
 This is precisely the trap the permutation test exists to catch: a signal that is long roughly
 half the time earns roughly half the equity risk premium **regardless of when it is long**.
-Circularly shifting the signal — destroying the timing while preserving the fraction of time
-in the market — produces nearly equivalent results (p = 0.23–0.45). The return is **market
+Circularly shifting the signal - destroying the timing while preserving the fraction of time
+in the market - produces nearly equivalent results (p = 0.23–0.45). The return is **market
 beta, not reversal timing**. The same exposure is available more cheaply by holding SPY at
 half size with zero trading.
 
 ### 4.4 The original finding, revisited
 
 The BCH pattern in the original notebook was real for its era. But the same rig applied to
-BTC/ETH over the recent 5 years shows the crypto daily-reversal effect has decayed too — BTC
+BTC/ETH over the recent 5 years shows the crypto daily-reversal effect has decayed too - BTC
 has actually flipped toward momentum (21% positive folds for the fade rule). The notebook
 measured a genuine but perishable inefficiency, near the end of its shelf life.
 
@@ -208,7 +208,7 @@ build or real losses.
 
 ## 5. Bugs caught during development (why the testing rigor mattered)
 
-Three bugs were caught before any result was trusted — each would have silently corrupted
+Three bugs were caught before any result was trusted - each would have silently corrupted
 conclusions:
 
 1. **Lookahead bug**: the first implementation paired signal *t* with the same return that
@@ -218,9 +218,9 @@ conclusions:
 2. **NaN propagation**: the turnover/cost series propagated the signal's warm-up NaN through
    every subsequent cost value.
 3. **Stale cache**: the data loader served a previously-cached narrow date range regardless of
-   the range requested — the first "full-history" validation actually ran on 2015–2024 data.
+   the range requested - the first "full-history" validation actually ran on 2015–2024 data.
 
-Lesson encoded in the repo: **in backtest code, bugs are asymmetric** — they rarely announce
+Lesson encoded in the repo: **in backtest code, bugs are asymmetric** - they rarely announce
 themselves, they just make results look slightly better or worse than reality. Every result
 should be gated behind tests for the failure mode that would most flatter it.
 
@@ -287,7 +287,7 @@ plan worth preserving:
 - **Execution convention must match between backtest and live** (Convention A/B machinery in
   `walkforward.py` already models this).
 - **A live strategy needs an edge-decay monitor**, not just entry validation: track the rolling
-  conditional spread in production and de-allocate when it drifts below the cost floor —
+  conditional spread in production and de-allocate when it drifts below the cost floor -
   kill-switch logic for decay, not just drawdown.
 
 ### 7.3 Rig improvements (small, optional)
@@ -308,4 +308,4 @@ plan worth preserving:
 | (earlier) | Original BCH notebook research; pattern found; naive validation passed |
 | 2026-07-08 | Full plan drafted; Phase 0 scaffold built; Phase 1 rig implemented with 29 tests |
 | 2026-07-08 | Phase 1 gate: SPY base rule **NO-GO** (both variants) |
-| 2026-07-08 | Pivots (vol-regime, weekly, BTC/ETH) — **all NO-GO**; project stopped at gate per plan |
+| 2026-07-08 | Pivots (vol-regime, weekly, BTC/ETH) - **all NO-GO**; project stopped at gate per plan |

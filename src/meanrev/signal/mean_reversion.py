@@ -13,7 +13,7 @@ def compute_signal(close: pd.Series, long_only: bool = False) -> pd.Series:
     """Target position for the day *following* each return, in {-1, 0, +1} (or {0, +1} if long_only).
 
     Signal dated t is derived from the close-to-close return ending at t, i.e. it only uses
-    data available through t's close — no lookahead.
+    data available through t's close - no lookahead.
     """
     log_return = np.log(close / close.shift(1))
     direction = np.sign(log_return)

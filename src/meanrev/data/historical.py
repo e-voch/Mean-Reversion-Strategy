@@ -20,11 +20,11 @@ def load(
     """Adjusted + raw daily OHLCV for `symbol`, cached to parquet under data/.
 
     Columns: open, high, low, close (adjusted), raw_close (unadjusted), volume.
-    Adjusted close is what return/signal calculations must use — SPY pays dividends,
+    Adjusted close is what return/signal calculations must use - SPY pays dividends,
     and raw close shows artificial jumps on ex-dividend dates that would corrupt log returns.
 
     Set nyse_calendar=False for assets that don't trade on NYSE sessions (e.g. crypto,
-    which trades every calendar day) — skips the session-completeness part of QC.
+    which trades every calendar day) - skips the session-completeness part of QC.
     """
     cache_path = CACHE_DIR / f"{symbol}.parquet"
     df = pd.read_parquet(cache_path) if cache_path.exists() and not refresh else None
@@ -42,7 +42,7 @@ def _download(symbol: str, start: str, end: str | None) -> pd.DataFrame:
     adjusted = yf.download(symbol, start=start, end=end, auto_adjust=True, progress=False)
     raw = yf.download(symbol, start=start, end=end, auto_adjust=False, progress=False)
     if adjusted.empty or raw.empty:
-        raise RuntimeError(f"yfinance returned no data for {symbol} — check connectivity/date range")
+        raise RuntimeError(f"yfinance returned no data for {symbol} - check connectivity/date range")
 
     adjusted.columns = adjusted.columns.get_level_values(0)
     raw.columns = raw.columns.get_level_values(0)
@@ -61,7 +61,7 @@ def _download(symbol: str, start: str, end: str | None) -> pd.DataFrame:
 
 def _quality_check(df: pd.DataFrame, symbol: str, nyse_calendar: bool = True) -> pd.DataFrame:
     if df.isna().any().any():
-        raise ValueError(f"{symbol}: NaNs present in cached data — refresh or investigate")
+        raise ValueError(f"{symbol}: NaNs present in cached data - refresh or investigate")
     if (df[["open", "high", "low", "close", "raw_close"]] <= 0).any().any():
         raise ValueError(f"{symbol}: non-positive prices present in cached data")
 

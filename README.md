@@ -4,10 +4,10 @@ A lag-1 direction-fade mean-reversion signal, originally discovered on Bitcoin C
 (`notebooks/01_bch_original.ipynb`), validated for SPY under a walk-forward /
 statistical-significance framework before any production trading code is built.
 
-**Full project documentation — goals, structure, methodology, results, and future work — is in
+**Full project documentation - goals, structure, methodology, results, and future work - is in
 [docs/PROJECT_DOCUMENTATION.md](docs/PROJECT_DOCUMENTATION.md).**
 
-Status: **Phase 1 validation complete — NO-GO on the base rule and all pivots**, see below.
+Status: **Phase 1 validation complete - NO-GO on the base rule and all pivots**, see below.
 
 ## Setup
 
@@ -25,7 +25,7 @@ hit this:
    as PEM.
 2. Append them to a copy of `certifi`'s bundle, saved as `.local/ca-bundle.pem` (gitignored).
 3. `meanrev/__init__.py` auto-detects that file and points `CURL_CA_BUNDLE` /
-   `REQUESTS_CA_BUNDLE` / `SSL_CERT_FILE` at it — no other setup needed.
+   `REQUESTS_CA_BUNDLE` / `SSL_CERT_FILE` at it - no other setup needed.
 
 ## Running the Phase 1 validation report
 
@@ -40,7 +40,7 @@ go/no-go verdict against the thresholds in the plan.
 **Result as of 2026-07-08**: both variants are **NO-GO**. The long/short base rule nets
 negative over the last 10 years of out-of-sample folds (mean Sharpe -0.36, edge below assumed
 costs). The long-only variant (fade down-days only) has a more plausible point-estimate Sharpe
-(0.57) but fails the significance gate (permutation p=0.45 on the same recent window) — its
+(0.57) but fails the significance gate (permutation p=0.45 on the same recent window) - its
 apparent edge isn't statistically distinguishable from noise given the sample size. This
 matches the expected outcome flagged in the plan: short-term daily reversal in SPY is a
 decayed, largely post-2013-dead anomaly.
