@@ -1,11 +1,13 @@
 # Mean-Reversion-Strategy
 
 A lag-1 direction-fade mean-reversion signal, originally discovered on Bitcoin Cash
-(`notebooks/01_bch_original.ipynb`), being validated for SPY under a walk-forward /
+(`notebooks/01_bch_original.ipynb`), validated for SPY under a walk-forward /
 statistical-significance framework before any production trading code is built.
 
-See `.claude`-generated plan (or ask the repo owner) for the full phased rollout. Status:
-**Phase 1 (SPY validation) complete — result: NO-GO**, see below.
+**Full project documentation — goals, structure, methodology, results, and future work — is in
+[docs/PROJECT_DOCUMENTATION.md](docs/PROJECT_DOCUMENTATION.md).**
+
+Status: **Phase 1 validation complete — NO-GO on the base rule and all pivots**, see below.
 
 ## Setup
 
