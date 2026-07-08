@@ -4,6 +4,13 @@ A lag-1 direction-fade mean-reversion signal, originally discovered on Bitcoin C
 (`notebooks/01_bch_original.ipynb`), validated for SPY under a walk-forward /
 statistical-significance framework before any production trading code is built.
 
+## Credits
+
+The original research notebook (`notebooks/01_bch_original.ipynb`) is based on the YouTube
+video ["Creating a Mean Reversion Strategy"](https://www.youtube.com/watch?v=_urG139AM48).
+All subsequent work in this repo (the `meanrev` package, walk-forward validation rig,
+significance testing, and results) builds on that starting point.
+
 **Full project documentation - goals, structure, methodology, results, and future work - is in
 [docs/PROJECT_DOCUMENTATION.md](docs/PROJECT_DOCUMENTATION.md).**
 

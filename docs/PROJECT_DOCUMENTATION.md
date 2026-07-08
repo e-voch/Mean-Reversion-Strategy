@@ -8,8 +8,9 @@
 
 ### 1.1 Origin
 
-The project began as a single research notebook (`notebooks/01_bch_original.ipynb`) that found a
-**lag-1 direction-fade mean-reversion pattern** in Bitcoin Cash (BCH) daily price data:
+The project began as a single research notebook (`notebooks/01_bch_original.ipynb`), based on
+the YouTube video ["Creating a Mean Reversion Strategy"](https://www.youtube.com/watch?v=_urG139AM48),
+that found a **lag-1 direction-fade mean-reversion pattern** in Bitcoin Cash (BCH) daily price data:
 
 > If yesterday's price move was down, today's move tends to be up - and vice versa.
 > So: fade yesterday's direction. `signal = -1 × sign(yesterday's return)`
